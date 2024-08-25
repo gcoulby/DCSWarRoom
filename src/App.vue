@@ -1,19 +1,15 @@
 <template>
   <WelcomeScreen />
-
-  <!-- <HelloWorld msg="Welcome to Your Vue.js + TypeScript App"/> -->
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue'
 import WelcomeScreen from './components/WelcomeScreen.vue'
-// import HelloWorld from './components/HelloWorld.vue';
 
 export default defineComponent({
   name: 'App',
   components: {
     WelcomeScreen,
-    // HelloWorld
   },
 })
 </script>
@@ -25,6 +21,6 @@ export default defineComponent({
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
+  overflow: hidden;
 }
 </style>

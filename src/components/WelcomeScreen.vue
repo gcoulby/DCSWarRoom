@@ -1,20 +1,19 @@
 <template>
   <div>
-    <h1 class="text-2xl">Welcome to the Global Properties App</h1>
-    <LoginForm />
-    <GlobalPropertiesCard />
-    <MapView />
+    <div class="flex justify-between items-center">
+      <div class="w-2/12 h-[100vh] p-4 bg-zinc-800 text-slate-50">
+        <SideBar />
+      </div>
+      <div class="w-10/12 h-full">
+        <MapView />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import GlobalPropertiesCard from './GlobalPropertiesCard.vue'
-import LoginForm from './LoginForm.vue'
 import MapView from './MapView.vue'
-import { ref } from 'vue'
-import { useStore } from '@/composables/useStore'
-
-const { dcsHost, dcsPort, dcsPassword } = useStore()
+import SideBar from './SideBar.vue'
 </script>
 
 <style scoped></style>

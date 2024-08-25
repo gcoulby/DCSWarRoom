@@ -1,83 +1,126 @@
 <template>
-  <div class="h-[800px] w-full mx-auto">
-    <p>{{ lat }}</p>
-    <l-map v-if="lat !== 0" ref="map" v-model:zoom="zoom" :center="[lat, lon]" @click="(e: any) => setLatLon(e.latlng)">
+  <div class="h-[100vh] w-full mx-auto bg-zinc-900">
+    <l-map v-if="lat !== 0" ref="map" v-model:zoom="mapZoom" :center="[lat, lon]" @click="(e: any) => setLatLon(e.latlng)">
       <l-tile-layer
         url="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png"
         layer-type="base"
         name="OpenStreetMap"
       ></l-tile-layer>
-      <!-- <l-marker :lat-lng="[globalProperties.ReferenceLatitude, globalProperties.ReferenceLongitude]" /> -->
-      <l-marker v-for="entity in computedMarkers" :key="entity.name" :lat-lng="[entity.lat, entity.lon]" :options="{ rotationAngle: 45 }">
-        <l-icon :icon-size="[32, 32]" :icon-url="fixedWingIcon" />
-      </l-marker>
-      <!-- <l-popup>
-          <h1 class="font-bold">{{ entity.name }}</h1>
-          <span>Distance: {{ entity.distance }} miles</span>
-          <p>Post Code:{{ entity.zipCode }}</p>
-          <p class="m-0">Lat: {{ entity.lat.toFixed(6) }}</p>
-          <p>Lon: {{ entity.lon.toFixed(6) }}</p>
-        </l-popup> -->
-      <!-- </l-marker> -->
-
-      <!-- <l-marker :lat-lng="[lat, lon]" :lat="lat"> </l-marker> -->
-      <!-- <l-marker
-        v-for="course in courses"
-        :key="course.id_course"
-        :lat-lng="[course.latitude, course.longitude]"
-        @click="() => getCourseDetails(course)"
-      >
-        <l-icon :icon-size="[32, 32]" :icon-url="golfIcon" />
+      <l-marker class="bg-blue-500" v-for="entity in computedMarkers" :key="entity.Name" :lat-lng="[entity.Latitude, entity.Longitude]">
+        <MapIcon :baseType="entity.Type ?? ''" :color="entity.Color ?? ''" :heading="`${entity.Heading}`" leaflet />
         <l-popup>
-          <h1 class="font-bold">{{ course.courseName }}</h1>
-          <span>Distance: {{ course.distance }} miles</span>
-          <p>Post Code:{{ course.zipCode }}</p>
-          <p class="m-0">Lat: {{ course.latitude.toFixed(6) }}</p>
-          <p>Lon: {{ course.longitude.toFixed(6) }}</p>
+          <div class="flex flex-col justify-between">
+            <h1 class="font-bold mb-2">{{ entity.Name }}</h1>
+            <table>
+              <tr>
+                <td class="font-semibold">Pilot:</td>
+                <td>{{ entity.Pilot }}</td>
+              </tr>
+              <tr>
+                <td class="font-semibold">Coalition:</td>
+                <td>{{ entity.Coalition }}</td>
+              </tr>
+              <tr>
+                <td class="font-semibold">Country:</td>
+                <td>{{ entity.Country }}</td>
+              </tr>
+              <tr>
+                <td class="font-semibold">Group:</td>
+                <td>{{ entity.Group }}</td>
+              </tr>
+              <tr>
+                <td class="font-semibold">Heading:</td>
+                <td>{{ entity.Heading }}</td>
+              </tr>
+              <tr>
+                <td class="font-semibold">Altitude:</td>
+                <td>{{ entity.Altitude }}</td>
+              </tr>
+              <tr>
+                <td class="font-semibold">Latitude:</td>
+                <td>{{ entity.Latitude }}</td>
+              </tr>
+              <tr>
+                <td class="font-semibold">Longitude:</td>
+                <td>{{ entity.Longitude }}</td>
+              </tr>
+              <tr>
+                <td class="font-semibold">Type:</td>
+                <td>{{ entity.Type }}</td>
+              </tr>
+            </table>
+          </div>
         </l-popup>
-      </l-marker> -->
+      </l-marker>
+      <l-circle
+        v-for="entity in computedMarkers"
+        :key="entity.Name"
+        :lat-lng="[entity.Latitude, entity.Longitude]"
+        :radius="20000"
+        :fill="false"
+        :interactive="false"
+        :color="entity.Color == 'Blue' ? '#93cde4' : '#ea827e'"
+        dash-array="10, 20"
+        :weight="1"
+      />
     </l-map>
+    <div v-else class="flex items-center justify-center h-[100vh] w-full">
+      <h1 class="text-4xl font-light text-white">Connect to DCS War Room Server to see map...</h1>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { GlobalProperties, Entity, Coordinates } from '@/types'
+import { GlobalProperties, Entity, Coordinates, EntityType } from '@/types'
 import { useStore } from '@/composables/useStore'
 import 'leaflet/dist/leaflet.css'
 
-import { LMap, LTileLayer, LMarker, LIcon, LPopup } from '@vue-leaflet/vue-leaflet'
+import { LMap, LTileLayer, LMarker, LIcon, LPopup, LCircle } from '@vue-leaflet/vue-leaflet'
 
-const { globalProperties, entities } = useStore()
+import MapIcon from './MapIcon.vue'
+import { useNATOIcon } from '@/composables/useNatoIcon'
 
-import fixedWingIcon from '../assets/FixedWing.png'
+const { globalProperties, entities, mapLatLong, mapZoom } = useStore()
 
-const lat = computed(() => globalProperties.value.ReferenceLatitude || 0)
-const lon = computed(() => globalProperties.value.ReferenceLongitude || 0)
+const lat = computed(() => {
+  if (mapLatLong.value && mapLatLong.value.lat !== 0 && mapLatLong.value.lat.toString() !== 'NaN') {
+    console.log(mapLatLong.value.lat)
+    return mapLatLong.value.lat
+  } else {
+    return globalProperties.value.ReferenceLatitude || 0
+  }
+})
+const lon = computed(() => {
+  if (mapLatLong.value && mapLatLong.value.long !== 0 && mapLatLong.value.long.toString() !== 'NaN') {
+    console.log(mapLatLong.value.long)
+    return mapLatLong.value.long
+  } else {
+    return globalProperties.value.ReferenceLongitude || 0
+  }
+})
+
+// globalProperties.value.ReferenceLatitude || 0)
+// const lon = computed(() => globalProperties.value.ReferenceLongitude || 0)
 
 const computedMarkers = computed(() => {
-  const markers: { lat: number; lon: number; name: string }[] = []
+  const markers: Entity[] = []
+
   Object.keys(entities.value).forEach((key) => {
     //@ts-expect-error - fix this
-    const entity = entities.value[key]
+    const entity = { ...entities.value[key] }
+    if (!entity.Latitude || !entity.Longitude || !entity.Type || !entity.Color) return
+    //if entity.Type !contains Ground, Air, or Sea
+    if (!entity.Type.includes('Ground') && !entity.Type.includes('Air') && !entity.Type.includes('Sea')) return
 
-    if (entity.Latitude && entity.Longitude && entity.Name) {
-      console.log(entity)
-      //convert to number
-      let a = '1'
-      let convertedA = +a
+    if (entity.Pilot == entity.Group) return
 
-      let lat1 = +(globalProperties.value.ReferenceLatitude ?? 0) + +entity.Latitude
-      let lon1 = +(globalProperties.value.ReferenceLongitude ?? 0) + +entity.Longitude
+    entity.Latitude = +(globalProperties.value.ReferenceLatitude ?? 0) + +entity.Latitude
+    entity.Longitude = +(globalProperties.value.ReferenceLongitude ?? 0) + +entity.Longitude
 
-      markers.push({
-        lat: lat1,
-        lon: lon1,
-        name: entity.Name,
-      })
-    }
+    if (key === 'Heading') entity.Heading = +entity.Heading
+    markers.push(entity)
   })
-  console.log(markers)
 
   return markers
 })

@@ -215,3 +215,11 @@ export interface Coordinates {
   v?: number
   heading?: number
 }
+
+export enum EntityType {
+  FriendlyAir,
+  FriendlyGround,
+  FriendlySea,
+  HostileAir,
+  HostileGround,
+}
